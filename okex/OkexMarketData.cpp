@@ -116,7 +116,7 @@ com_callbak_open()
       case BTC_USDT:
       {
         //each of the following two will get 1 response from the server, as expected
-        //comapi->Emit("ok_sub_spot_btc_usdt_depth_20");
+        comapi->Emit("ok_sub_spot_btc_usdt_depth_20");
         comapi->Emit("ok_sub_spot_btc_usdt_deals");
         break;
       }

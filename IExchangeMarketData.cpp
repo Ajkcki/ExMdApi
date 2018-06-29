@@ -17,11 +17,54 @@ BinaCPP_websocket::enter_event_loop();
 
 #include "IExchangeMarketData.h"
 
+using json = nlohmann::json;
+
+namespace nlohmann
+{
+template<typename KEY, typename VAL>
+struct adl_serializer<std::map<KEY, VAL>>
+{
+  static void
+  to_json(json &j, const std::map<KEY, VAL> _map)
+  {
+    j = json::array();
+    size_t sz = _map.size();
+    int count =0;
+    for (auto &p: _map)
+    {
+      double price = p.first;
+      double vol = p.second;
+      json jitem = json::array();
+      jitem[0] = price;
+      jitem[1] = vol;
+      j[count++] = jitem;
+    }
+
+  }
+  static void
+  from_json(const nlohmann::json &j, std::map<KEY, VAL> &sh_ptr)
+  {
+    //not implemented
+  }
+};
+}
+
+
 namespace newton
 {
 namespace exmdapi
 {
+void
+to_json(json &j, const Depth &p)
+{
+  j = json{{"ex", c_str(p.ex)}, {"pair", c_str(p.cryptoPair)}, {"bids", p.mBid}, {"asks", p.mAsk}, {"tm", p.timestamp}};
+}
 
+void
+from_json(const json &j, Depth &p)
+{
+  //not implemented
+}
 
 }
 }

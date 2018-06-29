@@ -6,10 +6,11 @@
 #include <map>
 #include <memory>
 #include <thread>
-#include <csignal>
+#include <string>
 #include <iostream>
+#include "json.hpp"
 
-const short SOURCE_OKEX = 1;
+//const short SOURCE_OKEX = 1;
 
 namespace newton
 {
@@ -74,9 +75,14 @@ struct Depth
   ExchangeEnum ex;
   CryptoPairEnum cryptoPair;
   long timestamp;
-  std::map<Price, Volume> mAsk;
   std::map<Price, Volume> mBid;
+  std::map<Price, Volume> mAsk;
+  friend void
+  to_json(nlohmann::json &j, const Depth &p);
+  //friend void  from_json(const nlohmann::json &j, Depth &p);
 };
+
+
 
 struct Trade
 {
@@ -144,7 +150,13 @@ public:
   }
 
   void
-  onDepth(const Depth &depth) {};
+  onDepth(const Depth depth) {
+    nlohmann::json j = depth;
+    std::cout<<j<<std::endl;
+  };
+
+  void
+  onTrade(const Trade trade) {};
 
 protected:
   /*
@@ -198,7 +210,8 @@ private:
   }
 
   void
-  _stop(){
+  _stop()
+  {
     _isRunning = false;
   }
 

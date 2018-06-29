@@ -4,7 +4,8 @@
 
 #include <string>
 #include <vector>
-#include  <stdexcept>
+#include <stdexcept>
+#include <utility>
 #include <boost/algorithm/string.hpp>
 #include "json.hpp"
 #include "OkexMarketData.h"
@@ -32,7 +33,7 @@ parseChannel(string channel)
   //depth last char is '0' ("ok_sub_spot_btc_usdt_depth_20")
   //trade last char is 's' ("ok_sub_spot_btc_usdt_deals")
   char c = channel.at(channel.size() - 1);
-  if ('0' == c)
+  if ('0' == c || '5' == c)
     return DEPTH;
   else if ('s' == c)
     return TRADE;
@@ -62,9 +63,31 @@ parseCryptoPair(string channel)
 }
 
 Depth
-parseDepth()
+parseDepth(json jmsg)
 {
+  Depth  dp;
 
+  json array = jmsg.at("data").at("bids");
+  for(int i =0 ; i<array.size(); i++){
+    //cout<<array[i]<<endl;
+    json item = array[i];
+    double price = std::stod (item[0].get<string>());
+    double vol = std::stod (item[1].get<string>());
+    //printf("%.8f, %.8f\n", price, vol);
+    dp.mBid.insert(make_pair(price, vol));
+  }
+
+  array = jmsg.at("data").at("asks");
+  for(int i =0 ; i<array.size(); i++){
+    //cout<<array[i]<<endl;
+    json item = array[i];
+    double price = std::stod (item[0].get<string>());
+    double vol = std::stod (item[1].get<string>());
+    //printf("%.8f, %.8f\n", price, vol);
+    dp.mAsk.insert(make_pair(price, vol));
+  }
+
+  return dp;
 }
 
 Trade
@@ -93,8 +116,9 @@ com_callbak_open()
       case BTC_USDT:
       {
         //each of the following two will get 1 response from the server, as expected
-        comapi->Emit("ok_sub_spot_btc_usdt_depth_20");
+        //comapi->Emit("ok_sub_spot_btc_usdt_depth_20");
         comapi->Emit("ok_sub_spot_btc_usdt_deals");
+        break;
       }
       case ETH_USDT:
       {
@@ -102,6 +126,7 @@ com_callbak_open()
         //don't know why
         comapi->Emit("ok_sub_spot_eth_usdt_depth_20");
         comapi->Emit("ok_sub_spot_eth_usdt_deals");
+        break;
       }
       case ETH_BTC:
       {
@@ -109,6 +134,7 @@ com_callbak_open()
         //don't know why
         comapi->Emit("ok_sub_spot_eth_btc_depth_20");
         comapi->Emit("ok_sub_spot_eth_btc_deals");
+        break;
       }
       //should not get here as sSubscribedCryptoPairs should not contain any pair not supported
       default:;
@@ -138,7 +164,7 @@ com_callbak_message(const char *message)
   json jmsg = json::parse(message)[0];
   //std::cout << jmsg << std::endl;
   string channel = jmsg.at("channel").get<string>();
-  //acknowledgment from okex
+  //filter out acknowledgments from okex
   if("addChannel" == channel) {
     //std::cout << jmsg << std::endl;
     return;
@@ -147,7 +173,12 @@ com_callbak_message(const char *message)
   int ch = parseChannel(channel);
   if (DEPTH == ch)
   {
-
+    Depth dp = parseDepth(jmsg);
+    dp.ex = ExchangeEnum ::OKEX;
+    dp.cryptoPair = parseCryptoPair(channel);
+    dp.timestamp = jmsg.at("data").at("timestamp").get<long>();
+    gOkex->onDepth(dp);
+    return;
   }
   else if (TRADE == ch)
   {

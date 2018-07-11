@@ -84,7 +84,7 @@ parseDepth (json jmsg)
   Depth dp;
 
   json array = jmsg.at ("data").at ("bids");
-  for (int i = 0; i < array.size (); i++)
+  for (size_t i = 0; i < array.size (); i++)
     {
       //cout<<array[i]<<endl;
       json item = array[i];
@@ -95,7 +95,7 @@ parseDepth (json jmsg)
     }
 
   array = jmsg.at ("data").at ("asks");
-  for (int i = 0; i < array.size (); i++)
+  for (size_t i = 0; i < array.size (); i++)
     {
       //cout<<array[i]<<endl;
       json item = array[i];
@@ -149,7 +149,7 @@ parseVecTrade (json jmsg)
 {
   vector<Trade> vTrd;
   json array = jmsg.at ("data");
-  for (int i = 0; i < array.size (); i++)
+  for (size_t i = 0; i < array.size (); i++)
     {
       json item = array[i];
       //cout << item << endl;
@@ -234,7 +234,7 @@ com_callbak_close ()
   std::cout << "连接已经断开！ " << std::endl;
 };
 
-static int count = 0;
+//static int count = 0;
 
 void
 com_callbak_message (const char *message)
